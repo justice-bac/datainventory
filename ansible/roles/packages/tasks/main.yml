@@ -1,0 +1,22 @@
+- name: Update and upgrade apt packages
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
+
+- name: Install required packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - ufw
+      - libpq5
+      - redis-server
+      - nginx
+      - supervisor
+      - postgresql
+    state: present

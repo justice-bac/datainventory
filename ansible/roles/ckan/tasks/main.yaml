@@ -1,0 +1,11 @@
+- name: Download the CKAN package
+  become: true
+  ansible.builtin.get_url:
+    url: https://packaging.ckan.org/python-ckan_2.11-jammy_amd64.deb
+    dest: /tmp/python-ckan_2.11-jammy_amd64.deb
+
+- name: Install the CKAN package
+  become: true
+  ansible.builtin.apt:
+    deb: /tmp/python-ckan_2.11-jammy_amd64.deb
+    state: present

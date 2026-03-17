@@ -1,0 +1,9 @@
+- name: Install Solr using Docker
+  become: true
+  ansible.builtin.docker_container:
+    name: ckan-solr
+    image: ckan/ckan-solr:2.11-solr9
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "8983:8983"

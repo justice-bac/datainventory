@@ -1,0 +1,6 @@
+.env
+ansible/inventory.ini
+infrastructure/.terraform/
+infrastructure/backend.tf
+infrastructure/*.tfstate
+infrastructure/*.tfstate.*

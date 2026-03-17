@@ -1,0 +1,73 @@
+# Architecture
+
+```d2
+
+overview: |md 
+# High-level overview of the deployed infrastructure on Azure.|
+
+direction: right
+
+users: Users {
+  shape: person
+}
+
+operator: Operator {
+  shape: person
+}
+
+rg: Resource Group {
+  style.fill: "#e8f4f8"
+  style.stroke: "#0078d4"
+
+  pip: Public IP & DNS {
+    shape: cloud
+    style.fill: "#cfe8fc"
+    style.stroke: "#0078d4"
+  }
+
+  vnet: Virtual Network {
+    shape: hexagon
+    style.fill: "#dce9f5"
+    style.stroke: "#0078d4"
+  }
+
+  vm: "Linux VM\n(CKAN, GitLab, Solr, PostgreSQL)" {
+    shape: rectangle
+    style.fill: "#fff4ce"
+    style.stroke: "#f2a900"
+  }
+
+  kv: Key Vault {
+    shape: stored_data
+    style.fill: "#fce8d5"
+    style.stroke: "#e05c00"
+  }
+
+  sa: "Storage Account\n(OpenTofu State)" {
+    shape: cylinder
+    style.fill: "#dff2db"
+    style.stroke: "#107c10"
+  }
+
+  automation: "Automation Account\n(VM Scheduler)" {
+    shape: step
+    style.fill: "#e6f3ff"
+    style.stroke: "#0078d4"
+  }
+}
+
+notes: |md
+## Notes
+- The Key Vault stores deployment secrets such as the CKAN database password; Ansible reads them at runtime via the Azure CLI.
+- OpenTofu state is bootstrapped locally on first apply, then migrated to the Storage Account backend.
+- Ansible and OpenTofu both authenticate to Azure via `az login` / `az account set`.
+- The Automation Account stops the VM at 7 PM EST and starts it at 7 AM EST daily to reduce costs.
+|
+
+users -> rg.pip: HTTPS
+rg.pip -> rg.vnet
+rg.vnet -> rg.vm
+operator -> rg.vm: SSH / Ansible
+operator -> rg.kv: Read secrets
+operator -> rg.sa: OpenTofu state
+rg.automation -> rg.vm: Start/Stop on schedule

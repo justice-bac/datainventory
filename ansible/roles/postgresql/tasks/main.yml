@@ -1,0 +1,66 @@
+- name: Check that PostgreSQL is installed correctly by listing the existing databases
+  become: true
+  become_user: postgres
+  ansible.builtin.command: psql -c "\l"
+  register: postgresql_dbs
+  changed_when: false
+
+- name: Ensure Azure Key Vault name is available
+  ansible.builtin.assert:
+    that:
+      - lookup('ansible.builtin.env', 'AZURE_KEY_VAULT_NAME') | length > 0
+    fail_msg: Set AZURE_KEY_VAULT_NAME before running the playbook.
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Retrieve CKAN database password from Azure Key Vault
+  ansible.builtin.command:
+    argv:
+      - az
+      - keyvault
+      - secret
+      - show
+      - --vault-name
+      - "{{ lookup('ansible.builtin.env', 'AZURE_KEY_VAULT_NAME') }}"
+      - --name
+      - "{{ ckan_db_password_secret_name }}"
+      - --query
+      - value
+      - -o
+      - tsv
+  register: postgresql_ckan_db_password_secret
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  become: false
+  no_log: true
+
+- name: Store CKAN database password for database tasks
+  ansible.builtin.set_fact:
+    postgresql_ckan_db_password: "{{ hostvars[ansible_play_hosts_all[0]].postgresql_ckan_db_password_secret.stdout }}"
+  no_log: true
+
+- name: Install psycopg2 Python library for PostgreSQL modules
+  become: true
+  ansible.builtin.apt:
+    name: python3-psycopg2
+    state: present
+    update_cache: true
+
+- name: Create database user if it does not already exist
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ ckan_db_user }}"
+    password: "{{ postgresql_ckan_db_password }}"
+    state: present
+
+- name: Create database if it does not already exist (utf-8 encoding)
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ ckan_db_name }}"
+    owner: "{{ ckan_db_user }}"
+    encoding: UTF-8
+    state: present

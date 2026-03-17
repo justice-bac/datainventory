@@ -1,0 +1,10 @@
+- name: Main-Playbook
+  hosts: sourcecontrol-vm
+  remote_user: azureuser
+
+  roles:
+    - packages
+    - docker
+    - ckan
+    - postgresql
+    - solr

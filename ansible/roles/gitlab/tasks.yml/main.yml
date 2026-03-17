@@ -1,0 +1,41 @@
+- name: Check if Gitlab repository exists
+  stat:
+    path: /etc/apt/sources.list.d/gitlab-ce.list
+  register: gitlab_repo_exists
+  when: ansible_os_family == "Debian"
+
+- name: Add GitLab CE GPG key
+  become: true
+  ansible.builtin.apt_key:
+    url: https://packages.gitlab.com/gpg.key
+    state: present
+  when: ansible_os_family == "Debian" and not gitlab_repo_exists.stat.exists
+
+- name: Add GitLab CE repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: 'deb https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/ubuntu/ {{ ansible_lsb.codename }} main'
+    state: present
+    filename: gitlab-ce
+    update_cache: true
+  when: ansible_os_family == "Debian" and not gitlab_repo_exists.stat.exists
+
+- name: Check if GitLab is installed
+  ansible.builtin.package_facts:
+    manager: apt
+  register: package_facts
+  
+- name: Debug package facts
+  debug:
+    var: package_facts.ansible_facts.packages
+
+- name: Debug package facts
+  debug:
+    var: gitlab_edition not in package_facts.ansible_facts.packages
+
+- name: Install GitLab CE
+  become: true
+  ansible.builtin.apt:
+    name: gitlab-ce
+    state: present
+    update_cache: true

@@ -1,0 +1,22 @@
+{
+    "name": "Source Control Dev Container",
+    "service": "sc",
+    "workspaceFolder": "/workspace",
+    "dockerComposeFile": "docker-compose.yml",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "redhat.ansible",
+                "ms-azuretools.vscode-azureterraform",
+                "opentofu.vscode-opentofu"
+            ]
+        }
+    },
+    "mounts": [
+        "type=bind,source=${env:SSH_AUTH_SOCK},target=/ssh-agent"
+    ],
+    "remoteEnv": {
+        "SSH_AUTH_SOCK": "/ssh-agent"
+    },
+    "postCreateCommand": "/workspace/.devcontainer/replace_zshrc.sh"
+}
